@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.thinkbeeway.MainActivity"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#FFFFFFFF"
+            android:padding="10dp">
+
+            <ImageButton
+                android:id="@+id/mainMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:background="#FFFFFFFF"
+                android:onClick="onMenu"
+                android:paddingRight="10dp"
+                android:src="@drawable/menu"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="MissingConstraints" />
+
+            <EditText
+                android:id="@+id/searchTextBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="8dp"
+                android:background="#FFDDDDDD"
+                android:ellipsize="end"
+                android:hint="@string/searchPlace"
+                android:imeOptions="actionSearch"
+                android:inputType="textShortMessage"
+                android:maxLines="1"
+                android:paddingLeft="15dp"
+                android:paddingTop="5dp"
+                android:paddingRight="80dp"
+                android:paddingBottom="5dp"
+                android:privateImeOptions="defaultInputMode=korean"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toStartOf="@+id/findWay"
+                app:layout_constraintStart_toEndOf="@+id/mainMenu"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="MissingConstraints" />
+
+            <ImageButton
+                android:id="@+id/findWay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="4dp"
+                android:background="#FFFFFFFF"
+                android:onClick="onFindWay"
+                android:src="@drawable/find_way2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="MissingConstraints" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <fragment
+            android:id="@+id/pathItemFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:name="com.example.thinkbeeway.fragment.PathIndexFragment" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/linearLayoutTmap"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:padding="0dp"
+            android:src="@drawable/location"
+            android:background="#00000000"
+            android:onClick="onSight"/>
+
+        <!--시설물 메뉴 표시-->
+            <ImageButton
+                android:id="@+id/btnFacilityMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/shield_click"
+                android:onClick="onFacilityMenu"/>
+            <ImageButton
+                android:id="@+id/cctvMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/cctv_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+            <ImageButton
+                android:id="@+id/bellMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/bell_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+
+            <ImageButton
+                android:id="@+id/policeMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/police_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+
+            <ImageButton
+                android:id="@+id/lampMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/lamp_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+
+            <ImageButton
+                android:id="@+id/shopMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/shop_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+
+            <ImageButton
+                android:id="@+id/protectMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/protect_click"
+                android:visibility="gone"
+                android:onClick="showFacility"/>
+
+        <!--장소 검색 하면 텍스트로도 보여줄 창, 미완 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+
+            </LinearLayout>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+
+        </LinearLayout>
+        <!--시설물 메뉴 표시 끝-->
+
+        <fragment
+            android:id="@+id/detailList"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:name="com.example.thinkbeeway.fragment.DetailPathFragment"
+            />
+
+        <fragment
+            android:id="@+id/placeFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:name="com.example.thinkbeeway.fragment.PlaceFragment"
+             />
+
+        <fragment
+            android:id="@+id/simplePathInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:name="com.example.thinkbeeway.fragment.PathSimpleContent"/>
+
+        </RelativeLayout>
+</LinearLayout>

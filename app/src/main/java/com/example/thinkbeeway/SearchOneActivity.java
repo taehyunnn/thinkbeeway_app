@@ -1,0 +1,265 @@
+package com.example.thinkbeeway;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.thinkbeeway.vo.Place;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class SearchOneActivity extends AppCompatActivity implements TextView.OnEditorActionListener {
+
+    private EditText searchText;
+
+    private List<String> distanceList;
+    private List<Place> placeList;
+    private ListView placeView;
+    private PlaceAdapter placeAdapter;
+    private double lat; // 현재 위치 위도
+    private double lon; // 현재 위치 경도
+    private int fromWhat;   // 출발지에서 누른건지 도착지에서 누른건지 체크
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.search_one);
+
+        searchText = findViewById(R.id.searchText);
+        searchText.setOnEditorActionListener(this);
+
+        Intent intent = getIntent();
+        lat = intent.getDoubleExtra("lat",0);
+        lon = intent.getDoubleExtra("lon",0);
+        fromWhat = intent.getIntExtra("startEnd",-1);
+    }
+
+    @Override
+    public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+
+        if(searchText.getText().toString().trim().equals("")) return false;
+
+        // 데이터 생성
+        distanceList = new ArrayList<>();
+        placeList = new ArrayList<>();
+        searchPlace();
+
+        // 리스트뷰와 어댑터 연결
+        placeView = findViewById(R.id.placeView);
+        placeAdapter = new PlaceAdapter(placeList, distanceList,this);
+        placeView.setAdapter(placeAdapter);
+
+        // 아이템에 클릭 이벤트 처리
+        placeView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            // adapterView : 아이템이 포함된 부모 뷰: 리스트뷰
+            // view : 클릭된 아이템
+            // i : 선택된 항목의 번호 ( position )
+            // l : 일반적으로 position과 같은 개념 ( id )
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // 클릭하면 선택한 걸로 반환하고 액티비티 끝내기
+                Place place = placeList.get(i);
+
+                Intent intent = new Intent();
+                intent.putExtra("name",place.getName());
+                intent.putExtra("lat",place.getNoorLat());
+                intent.putExtra("lon",place.getNoorLon());
+                intent.putExtra("startEnd",fromWhat);
+                setResult(RESULT_OK,intent);
+                finish();
+            }
+        });
+        return false;
+    }
+
+    public void searchPlace() {
+        Thread t1 = null;
+        try {
+            t1 = new SearchPlaceThread(getString(R.string.searchPlaceURL)+"?version=1"+
+                    "&searchKeyword="+ URLEncoder.encode(searchText.getText().toString().trim(),getString(R.string.encoding))+
+                    "&resCoorType=WGS84GEO"+
+                    "&searchType=all"+
+                    "&appKey="+getString(R.string.tMapKey));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        t1.start();
+        try {
+            t1.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 장소 검색 스레드
+    public class SearchPlaceThread extends Thread {
+        String url;
+        String result;
+
+        public SearchPlaceThread(String url)
+        {
+            this.url  = url;
+        }
+
+        public void run() {
+            try{
+                HttpURLConnection conn =
+                        (HttpURLConnection) new URL(url).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setDoInput(true); // 서버에서 오는 데이터 수신
+
+                int status = conn.getResponseCode();
+
+                InputStream is ;
+                if(status == HttpURLConnection.HTTP_NO_CONTENT){
+                    placeList.add(new Place("검색 결과가 없어요"));
+                    return;
+                }
+                else if(status != HttpURLConnection.HTTP_OK){
+                    is = conn.getErrorStream();
+                }
+                else {
+                    is = conn.getInputStream();
+                }
+                BufferedReader br = new BufferedReader(
+                        new InputStreamReader(is,getString(R.string.encoding)) );
+
+                StringBuffer buffer = new StringBuffer();
+                String line = br.readLine();
+                while(line != null){
+                    buffer.append(line);
+                    line = br.readLine();
+                }
+                br.close();
+                result = buffer.toString();
+                Log.d("DATA",result);
+                if(status != HttpURLConnection.HTTP_OK) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),"장소 검색"+ result, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+                // 에러가 발생하지 않은 경우
+                JSONObject jsonObject = new JSONObject(result);
+                JSONObject searchPoinInfo = jsonObject.getJSONObject("searchPoiInfo");
+                JSONObject pois = searchPoinInfo.getJSONObject("pois");
+                final JSONArray poi = pois.getJSONArray("poi");
+
+                // 스레드로 데이터 저장
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JSONObject temp ;
+                        for(int i=0; i<poi.length(); i++){
+                            try {
+                                temp = (JSONObject) poi.get(i);
+                                placeList.add(new Place(temp.getString("id"), temp.getString("name"), temp.getString("telNo"),
+                                        temp.getDouble("noorLat"), temp.getDouble("noorLon"),
+                                        temp.getString("upperAddrName"), temp.getString("middleAddrName"), temp.getString("lowerAddrName"),
+                                        temp.getString("detailAddrName"), temp.getString("roadName"),temp.getString("rpFlag")));
+                                // 거리 생성 : 유료임
+//                                if(lat !=0 && lon != 0){
+//                                    new DistanceHandler("https://apis.openapi.sk.com/thinkbeeway/routes/distance",
+//                                            temp.getDouble("noorLat"), temp.getDouble("noorLon")).start();
+//                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+            }
+            catch(Exception e ){e.printStackTrace();}
+        }
+    }
+
+    // 거리 계산 클래스
+    public class DistanceHandler extends Thread {
+        String url;
+        String result;
+        double endLat;
+        double endLng;
+        public DistanceHandler(String url, double endLat, double endLng)
+        {
+            this.url  = url;
+            this.endLat = endLat;
+            this.endLng = endLng;
+        }
+
+        public void run() {
+            url +="?version=1"+
+                    "&appKey="+getString(R.string.tMapKey)+
+                    "&startX="+lon+
+                    "&startY="+lat+
+                    "&endX="+endLng+
+                    "&endY="+endLat;
+            try{
+                HttpURLConnection conn =
+                        (HttpURLConnection) new URL(url).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setDoInput(true); // 서버에서 오는 데이터 수신
+
+                int status = conn.getResponseCode();
+                InputStream is ;
+                if(status != HttpURLConnection.HTTP_OK){
+                    is = conn.getErrorStream();
+                }
+                else {
+                    is = conn.getInputStream();
+                }
+                BufferedReader br = new BufferedReader(
+                        new InputStreamReader(is,getString(R.string.encoding)) );
+
+                StringBuffer buffer = new StringBuffer();
+                String line = br.readLine();
+                while(line != null){
+                    buffer.append(line);
+                    line = br.readLine();
+                }
+                br.close();
+                result = buffer.toString();
+                Log.d("DATA",result);
+                if(status != HttpURLConnection.HTTP_OK) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "거리 계산"+result, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+                // 에러가 발생하지 않은 경우
+                JSONObject jsonObject = new JSONObject(result);
+                JSONObject distanceInfo = jsonObject.getJSONObject("distanceInfo");
+                distanceList.add(distanceInfo.getString("distance"));
+            }
+            catch(Exception e ){e.printStackTrace();}
+        }
+    }
+}

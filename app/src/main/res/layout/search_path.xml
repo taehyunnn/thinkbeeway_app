@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 출발 도착 프래그먼트로 시도 -->
+    <!--<fragment-->
+        <!--android:id="@+id/findPathFragment"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:name="com.example.tmap.fragment.FindPathText"/>-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="100">
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="84"
+            >
+            <TextView
+                android:id="@+id/startText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/start"
+                android:textSize="20sp"
+                android:paddingLeft="20dp"
+                android:ellipsize="end"
+                android:maxLines="8"
+                android:onClick="searchPlace"
+                />
+            <TextView
+                android:id="@+id/endText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/end"
+                android:textSize="20sp"
+                android:paddingLeft="20dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:onClick="searchPlace"
+                />
+        </LinearLayout>
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:onClick="changeStartEnd"
+            android:layout_weight="1"
+            />
+
+    </LinearLayout>
+
+    <!--<ListView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content">-->
+
+    <!--</ListView>-->
+
+</LinearLayout>

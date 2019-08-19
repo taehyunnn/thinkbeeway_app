@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Tmap</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="searchPlace">장소 또는 주소 검색</string>
+    <string name="start">출발지</string>
+    <string name="end">도착지</string>
+    <string name="noSearch">검색 결과가 없어요</string>
+
+
+    <string name="tMapKey">eb78e65f-0177-4506-bec2-e7fbb962fb09</string>
+    <string name="tMapURL">https://apis.openapi.sk.com/tmap</string>
+    <string name="findPathURL">https://apis.openapi.sk.com/tmap/routes/pedestrian</string>
+    <string name="searchPlaceURL">https://apis.openapi.sk.com/tmap/pois</string>
+    <string name="reverseGeoCodingURL">https://apis.openapi.sk.com/tmap/geo/reversegeocoding</string>
+
+
+    <string name="searchFacilityURL">http://think.powerlinux.co.kr/api/map/search/mobile</string>
+    <string name="facilityDetailURL">http://think.powerlinux.co.kr/api/map/detail</string>
+    <string name="aroundFacilityURL">http://think.powerlinux.co.kr/api/map/search/around</string>
+    <string name="encoding">UTF-8</string>
+</resources>
