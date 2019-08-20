@@ -290,33 +290,51 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             sightCenterFlag = true; // 현재 위치가 중심 = true
             return ;
         }
-        tMapView.setSightVisible(true); // 시야 표시
-        tMapView.setCompassMode(true);  // 나침반 모드 ON
         compassFlag = true;             // 나침반 Flag on
-        btnSight.setImageResource(R.drawable.compass);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tMapView.setSightVisible(true); // 시야 표시
+                tMapView.setCompassMode(true);  // 나침반 모드 ON
+                btnSight.setImageResource(R.drawable.compass);
+            }
+        });
     }
 
     // 현재 위치 표시 -- 마커 이미지는 안됨
     public void showPresentLocation() {
 
         gps.OpenGps();  // GPS 키고
-        tMapView.setTrackingMode(true); //  현재 위치 트래킹
-        tMapView.setIconVisibility(true);   // 현 위치 아이콘 표시
         sightFlag =true;    // 현 위치 모드 TRUE
         sightCenterFlag = true;     // 현재 위치가 화면 중심이다 ㅇㅇ
-        btnSight.setImageResource(R.drawable.location_click);   // 이미지 변경
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tMapView.setTrackingMode(true); //  현재 위치 트래킹
+                tMapView.setIconVisibility(true);   // 현 위치 아이콘 표시
+                btnSight.setImageResource(R.drawable.location_click);   // 이미지 변경
+            }
+        });
+
     }
 
     // 현재 위치 끄기, 나침반도 같이 끄기
     public void hidePresentLocation(){
         gps.CloseGps();
-        tMapView.setIconVisibility(false); // 현재 위치 아이콘 숨기기
-        tMapView.setSightVisible(false);    // 시야표시 숨기기
-        tMapView.setTrackingMode(false);    // 현재 위치 트래킹 끄기
-        tMapView.setCompassMode(false); // 나침반 모드 끄기
         sightFlag = false;
         compassFlag =false;
-        btnSight.setImageResource(R.drawable.location);
+        runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                  tMapView.setIconVisibility(false); // 현재 위치 아이콘 숨기기
+                  tMapView.setSightVisible(false);    // 시야표시 숨기기
+                  tMapView.setTrackingMode(false);    // 현재 위치 트래킹 끄기
+                  tMapView.setCompassMode(false); // 나침반 모드 끄기
+                  btnSight.setImageResource(R.drawable.location);
+              }
+          }
+        );
+
     }
 
     @Override
@@ -565,6 +583,9 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
                 // 상세 경로, 포인트 저장되어있는거 삭제
                 if(pathInfoList.size() != 0){
+                    for(TMapMarkerItem t : pointList){
+                        tMapView.removeMarkerItem(t.getID());
+                    }
                     pathInfoList.clear();
                     pointList.clear();
                 }
@@ -907,21 +928,16 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-
+                        TMapPoint leftTopPoint = tMapView.getLeftTopPoint();
+                        TMapPoint rightBottomPoint = tMapView.getRightBottomPoint();
+                        new AroundFacilityThread("http://192.168.30.244:8080/api/map/search/around"+
+//                        new AroundFacilityThread(getString(R.string.aroundFacilityURL)+
+                                "?la="+rightBottomPoint.getLatitude()+
+                                "&ka="+leftTopPoint.getLatitude()+
+                                "&ea="+leftTopPoint.getLongitude()+
+                                "&ja="+rightBottomPoint.getLongitude()).start();    // 해당 부분의 모든 시설물 가져오기
                     }
                 },500);
-                TMapPoint leftTopPoint = tMapView.getLeftTopPoint();
-                TMapPoint rightBottomPoint = tMapView.getRightBottomPoint();
-                Log.d("left", String.valueOf(leftTopPoint.getLongitude()));
-                Log.d("right", String.valueOf(rightBottomPoint.getLongitude()));
-                Log.d("top", String.valueOf(leftTopPoint.getLatitude()));
-                Log.d("bottom", String.valueOf(rightBottomPoint.getLatitude()));
-                new AroundFacilityThread("http://192.168.30.244:8080/api/map/search/around"+
-//                        new AroundFacilityThread(getString(R.string.aroundFacilityURL)+
-                        "?la="+rightBottomPoint.getLatitude()+
-                        "&ka="+leftTopPoint.getLatitude()+
-                        "&ea="+leftTopPoint.getLongitude()+
-                        "&ja="+rightBottomPoint.getLongitude()).start();    // 해당 부분의 모든 시설물 가져오기
             }
         });
 
@@ -1058,6 +1074,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                             markerItem.setPosition(0.5f,0.5f);
                             markerItem.setTMapPoint(tMapPoint);
                             markerItem.setName((String) dataObject.get("code"));
+                            markerItem.setID((String)dataObject.get("code"));
                             tMapView.addMarkerItem((String) dataObject.get("code"),markerItem);
 
                             tempList.add(markerItem);   // 시설물 배열에 마커 추가
@@ -1066,14 +1083,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                         e.printStackTrace();
                     }
                 }
-                // 스레드로 시설물 표시
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//
-//                    }
-//                });
             }
             catch(Exception e ){e.printStackTrace();}
         }
@@ -1132,7 +1141,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             // 아이디, 이름이 같으면 시설물
             if(clickMarker.getID() == clickMarker.getName()) {
                 // 시설물 상세정보 요청
-                new DetailThread(getString(R.string.facilityDetailURL)+"?code="+clickMarker.getID(),
+//                new DetailThread(getString(R.string.facilityDetailURL)+"?code="+clickMarker.getID(),
+                new DetailThread("http://192.168.30.244:8080/api/map/detail"+"?code="+clickMarker.getID(),
                         clickMarker.getTMapPoint().getLatitude(),clickMarker.getTMapPoint().getLongitude()).start();
             }
             // 이름이 포인트면 경로
@@ -1204,18 +1214,36 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 }
                 // 에러가 발생하지 않은 경우
                 JSONObject json = new JSONObject(result);
-                final String adminName = (String) json.get("adminName");
-                final String adminTel = (String) json.get("adminTel");
-                final String landAddr = (String) json.get("landAddr");
-                final String roadAddr = (String) json.get("roadAddr");
+                final String adminName =  json.getString("adminName");
+                String adminTel ;
+                if( json.isNull("adminTel")){
+                    adminTel = "";
+                }else {
+                     adminTel =  json.getString("adminTel");
+                }
+                final String landAddr =  json.getString("landAddr");
+                final String roadAddr =  json.getString("roadAddr");
+                final String code =  json.getString("code");
 
                 // 스레드로 상세정보 표시
+                final String finalAdminTel = adminTel;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        TMapPoint point = new TMapPoint(lat+0.0005,lng);
+                        // 말풍선 띄우는 위치는 줌 레벨에 따라 다르게 하기
+                        int zoomLevel = tMapView.getZoomLevel();
+                        TMapPoint point ;
+                        if(zoomLevel < 6) {
+                            point = new TMapPoint(lat+0.002,lng);
+                        } else if(zoomLevel < 11){
+                            point = new TMapPoint(lat+0.001,lng);
+                        } else if(zoomLevel <16){
+                            point = new TMapPoint(lat+0.0005,lng);
+                        } else {
+                            point = new TMapPoint(lat+0.0001,lng);
+                        }
 
-                        markerOverlay = new MarkerOverlay(getApplicationContext(),adminName,adminTel,landAddr,roadAddr);
+                        markerOverlay = new MarkerOverlay(getApplicationContext(),adminName, finalAdminTel,landAddr,roadAddr,code);
                         markerOverlay.setID(adminName);
                         markerOverlay.setPosition(0.0f,0.0f);
                         markerOverlay.setTMapPoint(point);

@@ -70,7 +70,7 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
         distanceList = new ArrayList<>();
         placeList = new ArrayList<>();
         searchPlace();
-        calcDistance();
+//        calcDistance();
 
         // 리스트뷰와 어댑터 연결
         placeView = findViewById(R.id.placeView);
