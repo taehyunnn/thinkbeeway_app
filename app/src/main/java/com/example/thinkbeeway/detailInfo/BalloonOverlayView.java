@@ -19,7 +19,7 @@ public class BalloonOverlayView extends FrameLayout {
     private TextView content1;
     private TextView content2;
 
-    public BalloonOverlayView(Context context, String labelName, String id, String land, String road) {
+    public BalloonOverlayView(Context context, String labelName, String id, String land, String road, String code) {
 
         super(context);
 
@@ -27,7 +27,7 @@ public class BalloonOverlayView extends FrameLayout {
         layout = new LinearLayout(context);
         layout.setVisibility(VISIBLE);
 
-        setupView(context, layout, labelName, id, land, road);
+        setupView(context, layout, labelName, id, land, road, code);
 
         LayoutParams params = new LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -36,9 +36,8 @@ public class BalloonOverlayView extends FrameLayout {
     }
 
 
-    protected void setupView(Context context, final ViewGroup parent, String labelName, String id, String land, String road) {
+    protected void setupView(Context context, final ViewGroup parent, String labelName, String id, String land, String road, String code) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
 
         View view = inflater.inflate(R.layout.bubble_popup, parent, true);
 
@@ -47,7 +46,12 @@ public class BalloonOverlayView extends FrameLayout {
         content1  = view.findViewById(R.id.content1);
         content2 = view.findViewById(R.id.content2);
 
-        setTitle("관리: " +labelName);
+        if(code.contains("PD")){
+            setTitle(labelName+" 지구대");
+        }
+        else {
+            setTitle("관리: " +labelName);
+        }
         setSubTitle(id);
         setContent1(land);
         setContent2(road);
