@@ -19,5 +19,6 @@
     <string name="searchFacilityURL">http://think.powerlinux.co.kr/api/map/search/mobile</string>
     <string name="facilityDetailURL">http://think.powerlinux.co.kr/api/map/detail</string>
     <string name="aroundFacilityURL">http://think.powerlinux.co.kr/api/map/search/around</string>
+    <string name ="calcDistanceURL">http://think.pwoerlinux.co.kr/api/map/distance</string>
     <string name="encoding">UTF-8</string>
 </resources>

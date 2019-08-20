@@ -2,6 +2,7 @@ package com.example.thinkbeeway;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -28,20 +29,24 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SearchOneActivity extends AppCompatActivity implements TextView.OnEditorActionListener {
 
     private EditText searchText;
 
-    private List<String> distanceList;
+    private List<Integer> distanceList;
     private List<Place> placeList;
     private ListView placeView;
     private PlaceAdapter placeAdapter;
     private double lat; // 현재 위치 위도
     private double lon; // 현재 위치 경도
     private int fromWhat;   // 출발지에서 누른건지 도착지에서 누른건지 체크
+    private List<Map<String,Double>> locationList;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +70,7 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
         distanceList = new ArrayList<>();
         placeList = new ArrayList<>();
         searchPlace();
+        calcDistance();
 
         // 리스트뷰와 어댑터 연결
         placeView = findViewById(R.id.placeView);
@@ -95,6 +101,8 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
     }
 
     public void searchPlace() {
+
+        // 장소 검색 스레드
         Thread t1 = null;
         try {
             t1 = new SearchPlaceThread(getString(R.string.searchPlaceURL)+"?version=1"+
@@ -105,7 +113,6 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
         t1.start();
         try {
             t1.join();
@@ -114,11 +121,30 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
         }
     }
 
+    public void calcDistance() {
+        // 거리 계산 스레드
+        if(lat !=0 && lon != 0 && locationList != null){
+            Thread t2 = null;
+            try {
+                t2 = new DistanceHandler("http://192.168.30.244:8080/api/map/distanceAll"+
+                        "?locationList="+ URLEncoder.encode(new JSONArray(locationList).toString(),getString(R.string.encoding)));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
+            t2.start();
+            try {
+                t2.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     // 장소 검색 스레드
-    public class SearchPlaceThread extends Thread {
+    private class SearchPlaceThread extends Thread {
         String url;
         String result;
-
         public SearchPlaceThread(String url)
         {
             this.url  = url;
@@ -171,54 +197,51 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
                 JSONObject pois = searchPoinInfo.getJSONObject("pois");
                 final JSONArray poi = pois.getJSONArray("poi");
 
-                // 스레드로 데이터 저장
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        JSONObject temp ;
-                        for(int i=0; i<poi.length(); i++){
-                            try {
-                                temp = (JSONObject) poi.get(i);
-                                placeList.add(new Place(temp.getString("id"), temp.getString("name"), temp.getString("telNo"),
-                                        temp.getDouble("noorLat"), temp.getDouble("noorLon"),
-                                        temp.getString("upperAddrName"), temp.getString("middleAddrName"), temp.getString("lowerAddrName"),
-                                        temp.getString("detailAddrName"), temp.getString("roadName"),temp.getString("rpFlag")));
-                                // 거리 생성 : 유료임
-//                                if(lat !=0 && lon != 0){
-//                                    new DistanceHandler("https://apis.openapi.sk.com/thinkbeeway/routes/distance",
-//                                            temp.getDouble("noorLat"), temp.getDouble("noorLon")).start();
-//                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
+               locationList = new ArrayList<>();
+
+                JSONObject temp ;
+
+                // 출발지 먼저 입력하기
+                Map<String, Double> start = new HashMap<>();
+                start.put("lat",lat);
+                start.put("lon",lon);
+                locationList.add(start);
+
+                Map<String, Double> location;
+                for(int i=0; i<poi.length(); i++){
+                    try {
+                        temp = (JSONObject) poi.get(i);
+                        location = new HashMap<>();
+                        location.put("lat",temp.getDouble("noorLat"));
+                        location.put("lon",temp.getDouble("noorLon"));
+                        locationList.add(location);
+                        placeList.add(new Place(temp.getString("id"), temp.getString("name"), temp.getString("telNo"),
+                                temp.getDouble("noorLat"), temp.getDouble("noorLon"),
+                                temp.getString("upperAddrName"), temp.getString("middleAddrName"), temp.getString("lowerAddrName"),
+                                temp.getString("detailAddrName"), temp.getString("roadName"),temp.getString("rpFlag")));
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                });
+                }
             }
-            catch(Exception e ){e.printStackTrace();}
+            catch(Exception e )
+            {
+                e.printStackTrace();
+            }
         }
     }
 
     // 거리 계산 클래스
-    public class DistanceHandler extends Thread {
+    private class DistanceHandler extends Thread {
         String url;
         String result;
-        double endLat;
-        double endLng;
-        public DistanceHandler(String url, double endLat, double endLng)
+        public DistanceHandler(String url)
         {
             this.url  = url;
-            this.endLat = endLat;
-            this.endLng = endLng;
         }
 
         public void run() {
-            url +="?version=1"+
-                    "&appKey="+getString(R.string.tMapKey)+
-                    "&startX="+lon+
-                    "&startY="+lat+
-                    "&endX="+endLng+
-                    "&endY="+endLat;
             try{
                 HttpURLConnection conn =
                         (HttpURLConnection) new URL(url).openConnection();
@@ -255,11 +278,15 @@ public class SearchOneActivity extends AppCompatActivity implements TextView.OnE
                     return;
                 }
                 // 에러가 발생하지 않은 경우
-                JSONObject jsonObject = new JSONObject(result);
-                JSONObject distanceInfo = jsonObject.getJSONObject("distanceInfo");
-                distanceList.add(distanceInfo.getString("distance"));
+                JSONArray jsonArray  = new JSONArray(result);
+                for(int i=0; i<jsonArray.length(); i++){
+                    distanceList.add((Integer) jsonArray.get(i));
+                }
             }
-            catch(Exception e ){e.printStackTrace();}
+            catch(Exception e )
+            {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -14,13 +14,13 @@ import java.util.List;
 public class PlaceAdapter extends BaseAdapter {
 
     List<Place> placeList;
-    List<String> distanceList;
+    List<Integer> distanceList;
     Context context;
     LayoutInflater layoutInflater;
 
     public PlaceAdapter() { }
 
-    public PlaceAdapter(List<Place> placeList, List<String> distanceList, Context context) {
+    public PlaceAdapter(List<Place> placeList, List<Integer> distanceList, Context context) {
         this.placeList = placeList;
         this.distanceList = distanceList;
         this.context = context;
@@ -57,17 +57,20 @@ public class PlaceAdapter extends BaseAdapter {
         // 데이터 설정
         Place place = placeList.get(i);
         name.setText(place.getName());
-        if(distanceList.size() > i){
-            String distanceValue = distanceList.get(i);
-            if(distanceValue.length() > 3){
-                String intStr = distanceValue.substring(0,distanceValue.length()-3);
-                String fracStr = distanceValue.substring(distanceValue.length()-2,distanceValue.length()-1);
-                distance.setText(intStr+"."+fracStr+"km");
+
+        // 거리 정보 있으면
+        if(distanceList.size() > 0)
+        {
+            int distanceValue = (int)distanceList.get(i);
+            // 1km 이상이면 형식 바꿔주기
+            if( distanceValue >= 1000 ){
+                distance.setText((distanceValue/1000)+"."+((distanceValue%1000)/100)+"km");
             }
             else {
                 distance.setText(distanceValue+"m");
             }
         }
+
         address.setText(place.getFullAddrName());
         tel.setText(place.getTelNo());
 

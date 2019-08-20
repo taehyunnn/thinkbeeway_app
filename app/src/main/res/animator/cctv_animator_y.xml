@@ -3,5 +3,5 @@
         android:duration="100"
         android:propertyName="translationY"
         android:valueFrom="0"
-        android:valueTo="-160dp"
+        android:valueTo="-150dp"
         />

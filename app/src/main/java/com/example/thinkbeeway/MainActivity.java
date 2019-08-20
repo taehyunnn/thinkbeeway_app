@@ -228,12 +228,17 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
         fm.beginTransaction().addToBackStack(null);
 
-        hideFragment(placeFragment);
-        hideFragment(pathSimpleContent);
-        hideFragment(detailPathFragment);
-        hideFragment(pathIndexFragment);
-        initGps();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                hideFragment(placeFragment);
+                hideFragment(pathSimpleContent);
+                hideFragment(detailPathFragment);
+                hideFragment(pathIndexFragment);
+            }
+        });
 
+        initGps();
         bundle = new Bundle();
     }
 
@@ -260,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         }
     }
 
-    // 버튼 클릭했을 때 메소드 분기기
+    // 버튼 클릭했을 때 메소드 분기
    public void onSight(View view){
         // 현위치, 나침반 모드 끄기
         if (sightFlag == true && compassFlag == true) {
@@ -756,50 +761,59 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     // 모든 시설물 버튼 숨기기
     private void hideFacilityBtn() {
-        for(ImageButton ib : facilities){
-            ib.clearAnimation();    // fillAfter로 유지되는 애니메이션 종료
-            ib.setVisibility(View.GONE);    // 화면에서 지우기
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for(ImageButton ib : facilities){
+                    ib.clearAnimation();    // fillAfter로 유지되는 애니메이션 종료
+                    ib.setVisibility(View.GONE);    // 화면에서 지우기
+                }
+            }
+        });
     }
 
     // 시설물 등장 애니메이션
     public void showFacilAnime() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for(ImageButton ib : facilities){
+                    ib.setVisibility(VISIBLE);
+                    switch (ib.getId()){
+                        case R.id.bellMenu:
+                            animator.getBellSet().setTarget(ib);
+                            animator.getBellSet().start();
 
-        for(ImageButton ib : facilities){
-            ib.setVisibility(VISIBLE);
-            switch (ib.getId()){
-                case R.id.bellMenu:
-                    animator.getBellSet().setTarget(ib);
-                    animator.getBellSet().start();
+                            break;
+                        case R.id.cctvMenu:
+                            animator.getCctvSet().setTarget(ib);
+                            animator.getCctvSet().start();
 
-                    break;
-                case R.id.cctvMenu:
-                   animator.getCctvSet().setTarget(ib);
-                   animator.getCctvSet().start();
+                            break;
+                        case R.id.lampMenu:
+                            animator.getLampSet().setTarget(ib);
+                            animator.getLampSet().start();
 
-                    break;
-                case R.id.lampMenu:
-                    animator.getLampSet().setTarget(ib);
-                    animator.getLampSet().start();
+                            break;
+                        case R.id.shopMenu:
+                            animator.getShopSet().setTarget(ib);
+                            animator.getShopSet().start();
 
-                    break;
-                case R.id.shopMenu:
-                    animator.getShopSet().setTarget(ib);
-                    animator.getShopSet().start();
+                            break;
+                        case R.id.policeMenu:
+                            animator.getPoliceSet().setTarget(ib);
+                            animator.getPoliceSet().start();
 
-                    break;
-                case R.id.policeMenu:
-                    animator.getPoliceSet().setTarget(ib);
-                    animator.getPoliceSet().start();
+                            break;
+                        case R.id.protectMenu:
+                            animator.getProtectSet().setTarget(ib);
+                            animator.getProtectSet().start();
 
-                    break;
-                case R.id.protectMenu:
-                    animator.getProtectSet().setTarget(ib);
-                    animator.getProtectSet().start();
-
-                    break;
+                            break;
+                    }
+                }
             }
-        }
+        });
     }
 
     // 시설물 별로 지도에 표시
@@ -893,20 +907,21 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        TMapPoint leftTopPoint = tMapView.getLeftTopPoint();
-                        TMapPoint rightBottomPoint = tMapView.getRightBottomPoint();
-                        Log.d("left", String.valueOf(leftTopPoint.getLongitude()));
-                        Log.d("right", String.valueOf(rightBottomPoint.getLongitude()));
-                        Log.d("top", String.valueOf(leftTopPoint.getLatitude()));
-                        Log.d("bottom", String.valueOf(rightBottomPoint.getLatitude()));
-                new AroundFacilityThread("http://192.168.30.244:8080/api/map/search/around"+
-//                        new AroundFacilityThread(getString(R.string.aroundFacilityURL)+
-                                "?la="+rightBottomPoint.getLatitude()+
-                                "&ka="+leftTopPoint.getLatitude()+
-                                "&ea="+leftTopPoint.getLongitude()+
-                                "&ja="+rightBottomPoint.getLongitude()).start();    // 해당 부분의 모든 시설물 가져오기
+
                     }
                 },500);
+                TMapPoint leftTopPoint = tMapView.getLeftTopPoint();
+                TMapPoint rightBottomPoint = tMapView.getRightBottomPoint();
+                Log.d("left", String.valueOf(leftTopPoint.getLongitude()));
+                Log.d("right", String.valueOf(rightBottomPoint.getLongitude()));
+                Log.d("top", String.valueOf(leftTopPoint.getLatitude()));
+                Log.d("bottom", String.valueOf(rightBottomPoint.getLatitude()));
+                new AroundFacilityThread("http://192.168.30.244:8080/api/map/search/around"+
+//                        new AroundFacilityThread(getString(R.string.aroundFacilityURL)+
+                        "?la="+rightBottomPoint.getLatitude()+
+                        "&ka="+leftTopPoint.getLatitude()+
+                        "&ea="+leftTopPoint.getLongitude()+
+                        "&ja="+rightBottomPoint.getLongitude()).start();    // 해당 부분의 모든 시설물 가져오기
             }
         });
 
@@ -916,12 +931,12 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     /// 시설물 찾기
     public void searchFacility() throws JSONException {
-        if(facility.getFourBtnOn()){
-            tMapView.setZoomLevel(18);
-        }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
+//        if(facility.getFourBtnOn()){
+//            tMapView.setZoomLevel(18);
+//        }
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
                 TMapPoint leftTopPoint = tMapView.getLeftTopPoint();
                 TMapPoint rightBottomPoint = tMapView.getRightBottomPoint();
 
@@ -929,7 +944,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 double left = leftTopPoint.getLongitude();
                 double bottom = rightBottomPoint.getLatitude();
                 double right = rightBottomPoint.getLongitude();
-
 
                 try {
 //            new HttpThread(getString(R.string.searchFacilityURL) +
@@ -943,8 +957,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 } catch (UnsupportedEncodingException | JSONException e) {
                     e.printStackTrace();
                 }
-            }
-        },500);
+//            }
+//        },500);
     }
 
     // 시설물 지도에 표시하는 스레드
@@ -1066,14 +1080,16 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     }
 
     // 시설물 숨기기
-    public void hideFacility(List<TMapMarkerItem> list){
-        if(!facility.getFourBtnOn()){
-            tMapView.setUserScrollZoomEnable(true);
-        }
-        for(int i=0; i<list.size(); i++ ){
-            String id = list.get(i).getID();
-            tMapView.removeMarkerItem(id);
-        }
+    public void hideFacility(final List<TMapMarkerItem> list){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for(int i=0; i<list.size(); i++ ){
+                    String id = list.get(i).getID();
+                    tMapView.removeMarkerItem(id);
+                }
+            }
+        });
         list.clear();
     }
 
